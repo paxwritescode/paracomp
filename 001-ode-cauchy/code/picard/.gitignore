@@ -1,0 +1,5 @@
+.vscode
+build
+*.dSYM
+main
+.DS_Store
