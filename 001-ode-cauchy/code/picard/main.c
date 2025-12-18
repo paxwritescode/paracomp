@@ -13,11 +13,11 @@ int main(void)
     double t = 0.3;
     double eps = 1e-6;
 
-    /* test matrix A (пример) */
+    /* test matrix A  */
     double **A = alloc_matrix(n, n);
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
-            A[i][j] = (i == j) ? -1.0 : 0.0;
+            A[i][j] = (i >= j) ? 1.0 : 0.0;
 
     /* test RHS */
     double **f = generate_test_rhs(n, m, t_0, t);
