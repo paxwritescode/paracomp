@@ -1,9 +1,9 @@
 #include "matrices.h"
 
-double **alloc_matrix(int n)
+double **alloc_matrix(int n, int m)
 {
     int i = 0;
-    double** y = calloc(n, sizeof(*y));
+    double **y = calloc(n, sizeof(*y));
 
     if (!y)
     {
@@ -13,7 +13,7 @@ double **alloc_matrix(int n)
 
     for (i = 0; i < n; i++)
     {
-        y[i] = calloc(n, sizeof(*y[i]));
+        y[i] = calloc(m, sizeof(*y[i]));
         if (!y[i])
         {
             for (int j = 0; j < i; j++)
@@ -27,50 +27,28 @@ double **alloc_matrix(int n)
     return y;
 }
 
-void free_matrix(double** y, int n)
+void free_matrix(double **y, int n)
 {
     int i = 0;
-    for(i = 0; i < n; i++)
+    for (i = 0; i < n; i++)
     {
         free(y[i]);
     }
     free(y);
 }
 
-double** substract_matrix(int n, double** y_1, double** y_2)
+double compute_diff_norm(int n, int m, double **y1, double **y2)
 {
-    int i = 0, j = 0;
-    double** res = alloc_matrix(n);
+    double norm = 0.0;
 
-    for (i = 0; i < n; i++)
+    for (int i = 0; i < n; ++i)
     {
-        for (j = 0; j < n; j++)
-        {
-            res[i][j] = y_1[i][j] - y_2[i][j];
-        }
+        double row_sum = 0.0;
+        for (int j = 0; j < m; ++j)
+            row_sum += fabs(y1[i][j] - y2[i][j]);
+
+        if (row_sum > norm)
+            norm = row_sum;
     }
-
-    return res;
-}
-
-double compute_matrix_norm(int n, double** y)
-{
-    int i = 0, j = 0;
-    double inf_norm = 0.0;
-
-
-    for(i = 0; i < n; i++)
-    {
-        double cur_inf_norm = 0.0;
-        for (j = 0; j < n; j++)
-        {
-            cur_inf_norm += fabs(y[i][j]);
-        }
-        if (cur_inf_norm > inf_norm)
-        {
-            inf_norm = cur_inf_norm;
-        }
-    }
-    
-    return inf_norm;
+    return norm;
 }
