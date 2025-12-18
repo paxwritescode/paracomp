@@ -52,3 +52,20 @@ double compute_diff_norm(int n, int m, double **y1, double **y2)
     }
     return norm;
 }
+
+double* matrix_mul_vector(int n, int m, double** A, double* y_m)
+{
+    int i = 0, j = 0;
+
+    double* res = calloc(n, sizeof(double));
+    if(!res)
+    {
+        printf("Error: memory not allocated!");
+        exit(EXIT_FAILURE);
+    }
+    for (i = 0; i < n; i++)
+        for (j = 0; j < m + 1; j++)
+            res[i] += A[i][j] * y_m[j]; 
+
+    return res;
+}

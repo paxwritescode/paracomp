@@ -3,8 +3,8 @@
 #ifndef GENERATE_H
 #define GENERATE_H
 
-void generate_test_rhs(double t, double *f);
-void generate_rhs(int n, double t, double *f);
+double **generate_test_rhs(int n, int m, double t_0, double t);
+double** generate_rhs(int n, int m, double t0, double t);
 int generate_threads(int *threads, int max_threads);
 
 #endif
