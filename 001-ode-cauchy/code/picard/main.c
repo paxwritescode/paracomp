@@ -5,7 +5,7 @@
 #include "generate.h"
 #include "picard.h"
 
-int main(void)
+void run_test_case(void)
 {
     int n = 3;
     int m = 3;
@@ -38,6 +38,10 @@ int main(void)
     free_matrix(y, n);
     free_matrix(f, n);
     free_matrix(A, n);
+}
 
+int main(void)
+{
+    run_test_case();
     return 0;
 }

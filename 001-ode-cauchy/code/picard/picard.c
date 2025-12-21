@@ -10,8 +10,6 @@ double **picard_method(int n, double **f, double**A, double eps, double t_0, dou
 {
     int i = 0, j = 0;
     int iterations = 0;
-    double *Ay_j;
-    double *Ay_j1;
 
     double delta_t = (t - t_0) / (double)m;
 
@@ -20,22 +18,26 @@ double **picard_method(int n, double **f, double**A, double eps, double t_0, dou
 
     double diff = 0;
 
+    double* yj = calloc(n, sizeof(double));
+    double* yj1 = calloc(n, sizeof(double));
+
+    double* Ay_j = calloc(n, sizeof(double));
+    double* Ay_j1 = calloc(n, sizeof(double));
+
     /* Iterations of Picard method */
     do
     {
         for (j = 0; j < m; j++) 
         {
-            double* yj = calloc(n, sizeof(double));
-            double* yj1 = calloc(n, sizeof(double));
-
             for (i = 0; i < n; i++)
             {
                 yj[i]  = y_prev[i][j];
                 yj1[i] = y_prev[i][j + 1];
             }
 
-            Ay_j  = matrix_mul_vector(n, A, yj);
-            Ay_j1 = matrix_mul_vector(n, A, yj1);
+            matrix_mul_vector(n, A, yj, Ay_j);
+            matrix_mul_vector(n, A, yj1, Ay_j1);
+
             for (i = 0; i < n; i++)
             {
                 y[i][j + 1] = y_prev[i][j]
@@ -44,10 +46,6 @@ double **picard_method(int n, double **f, double**A, double eps, double t_0, dou
                       + Ay_j1[i] + f[i][j + 1]
                     );
             }
-            free(yj);
-            free(yj1);
-            free(Ay_j);
-            free(Ay_j1);
         }
 
         diff = compute_diff_norm(n, m + 1, y, y_prev);
@@ -59,7 +57,12 @@ double **picard_method(int n, double **f, double**A, double eps, double t_0, dou
     } 
     while (diff > eps);
 
+    free(yj); free(yj1);
+    free(Ay_j); free(Ay_j1);
+
     free_matrix(y_prev, n);
+
     printf("%d iterations\n", iterations);
+
     return y;
 }
