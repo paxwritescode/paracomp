@@ -4,3 +4,4 @@ build
 main
 .DS_Store
 picard
+picard_asan

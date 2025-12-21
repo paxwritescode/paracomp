@@ -13,7 +13,7 @@ double **alloc_matrix(int n, int m)
 
     for (i = 0; i < n; i++)
     {
-        y[i] = calloc(m, sizeof(*y[i]));
+        y[i] = calloc(m + 1, sizeof(*y[i]));
         if (!y[i])
         {
             for (int j = 0; j < i; j++)
@@ -53,7 +53,7 @@ double compute_diff_norm(int n, int m, double **y1, double **y2)
     return norm;
 }
 
-double* matrix_mul_vector(int n, int m, double** A, double* y_m)
+double* matrix_mul_vector(int n, double** A, double* y_m)
 {
     int i = 0, j = 0;
 
@@ -64,7 +64,7 @@ double* matrix_mul_vector(int n, int m, double** A, double* y_m)
         exit(EXIT_FAILURE);
     }
     for (i = 0; i < n; i++)
-        for (j = 0; j < m + 1; j++)
+        for (j = 0; j < n; j++)
             res[i] += A[i][j] * y_m[j]; 
 
     return res;
