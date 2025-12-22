@@ -1,10 +1,8 @@
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
+#include <omp.h>
 
 #include "picard.h"
 #include "generate.h"
-#include "matrices.h"
+#include "matrix_tools.h"
 
 double **picard_method(int n, double **f, double**A, double eps, double t_0, double t, int m)
 {
@@ -29,6 +27,7 @@ double **picard_method(int n, double **f, double**A, double eps, double t_0, dou
     {
         for (j = 0; j < m; j++) 
         {
+            #pragma omp parallel for
             for (i = 0; i < n; i++)
             {
                 yj[i]  = y_prev[i][j];
@@ -38,6 +37,7 @@ double **picard_method(int n, double **f, double**A, double eps, double t_0, dou
             matrix_mul_vector(n, A, yj, Ay_j);
             matrix_mul_vector(n, A, yj1, Ay_j1);
 
+            #pragma omp parallel for
             for (i = 0; i < n; i++)
             {
                 y[i][j + 1] = y_prev[i][j]
@@ -50,6 +50,7 @@ double **picard_method(int n, double **f, double**A, double eps, double t_0, dou
 
         diff = compute_diff_norm(n, m + 1, y, y_prev);
 
+        #pragma omp parallel for
         for (i = 0; i < n; i++)
             for(j = 0; j < m + 1; j++)
                 y_prev[i][j] = y[i][j];

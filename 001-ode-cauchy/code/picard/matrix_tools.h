@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#ifndef MATRICES_H
-#define MATRICES_H
+#ifndef MATRIX_TOOLS_H
+#define MATRIX_TOOLS_H
 
 double **alloc_matrix(int n, int m);
 void free_matrix(double **y, int n);

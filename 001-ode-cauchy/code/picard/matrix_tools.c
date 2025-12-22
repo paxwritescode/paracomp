@@ -1,4 +1,6 @@
-#include "matrices.h"
+#include <omp.h>
+
+#include "matrix_tools.h"
 
 double **alloc_matrix(int n, int m)
 {
@@ -41,6 +43,7 @@ double compute_diff_norm(int n, int m, double **y1, double **y2)
 {
     double norm = 0.0;
 
+    #pragma omp parallel for reduction(max:norm)
     for (int i = 0; i < n; ++i)
     {
         double row_sum = 0.0;
@@ -56,6 +59,8 @@ double compute_diff_norm(int n, int m, double **y1, double **y2)
 void matrix_mul_vector(int n, double** A, double* y_m, double* res)
 {
     int i = 0, j = 0;
+
+    #pragma omp parallel for
 
     for (i = 0; i < n; i++)
     {

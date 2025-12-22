@@ -1,5 +1,5 @@
 #include "generate.h"
-#include "matrices.h"
+#include "matrix_tools.h"
 
 /* n dimensions, m + 1 nodes */
 

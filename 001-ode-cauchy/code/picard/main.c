@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <math.h>
+#include <omp.h>
 
-#include "matrices.h"
+#include "matrix_tools.h"
 #include "generate.h"
 #include "picard.h"
 
@@ -21,6 +22,8 @@ void run_test_case(void)
 
     /* test RHS */
     double **f = generate_test_rhs(n, m, t_0, t);
+
+    printf("TEST CASE FROM REPORT\n\n");
 
     /* run Picard */
     double **y = picard_method(n, f, A, eps, t_0, t, m);
@@ -43,5 +46,9 @@ void run_test_case(void)
 int main(void)
 {
     run_test_case();
+    // #pragma omp parallel
+    // {
+    //     printf("thread %d\n", omp_get_thread_num());
+    // }
     return 0;
 }
