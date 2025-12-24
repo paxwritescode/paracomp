@@ -5,6 +5,7 @@
 #include "matrix_tools.h"
 #include "generate.h"
 #include "picard.h"
+#include "study.h"
 
 void run_test_case(void)
 {
@@ -45,10 +46,9 @@ void run_test_case(void)
 
 int main(void)
 {
-    run_test_case();
-    // #pragma omp parallel
-    // {
-    //     printf("thread %d\n", omp_get_thread_num());
-    // }
+    // run_test_case();
+
+    study_time_vs_size();
+
     return 0;
 }
