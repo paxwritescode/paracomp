@@ -4,7 +4,7 @@
 #include "generate.h"
 #include "matrix_tools.h"
 
-double **picard_method(int n, double **f, double**A, double eps, double t_0, double t, int m)
+double **picard_method(int n, double **f, double **A, double eps, double t_0, double t, int m)
 {
     int i = 0, j = 0;
     int iterations = 0;
@@ -16,21 +16,20 @@ double **picard_method(int n, double **f, double**A, double eps, double t_0, dou
 
     double diff = 0;
 
-    double* yj = calloc(n, sizeof(double));
-    double* yj1 = calloc(n, sizeof(double));
+    double *yj = calloc(n, sizeof(double));
+    double *yj1 = calloc(n, sizeof(double));
 
-    double* Ay_j = calloc(n, sizeof(double));
-    double* Ay_j1 = calloc(n, sizeof(double));
+    double *Ay_j = calloc(n, sizeof(double));
+    double *Ay_j1 = calloc(n, sizeof(double));
 
     /* Iterations of Picard method */
     do
     {
-        for (j = 0; j < m; j++) 
+        for (j = 0; j < m; j++)
         {
-            #pragma omp parallel for
             for (i = 0; i < n; i++)
             {
-                yj[i]  = y_prev[i][j];
+                yj[i] = y_prev[i][j];
                 yj1[i] = y_prev[i][j + 1];
             }
 
@@ -40,26 +39,23 @@ double **picard_method(int n, double **f, double**A, double eps, double t_0, dou
             #pragma omp parallel for
             for (i = 0; i < n; i++)
             {
-                y[i][j + 1] = y_prev[i][j]
-                    + delta_t / 2.0 * (
-                        Ay_j[i]  + f[i][j]
-                      + Ay_j1[i] + f[i][j + 1]
-                    );
+                y[i][j + 1] = y_prev[i][j] + delta_t / 2.0 * (Ay_j[i] + f[i][j] + Ay_j1[i] + f[i][j + 1]);
             }
         }
 
         diff = compute_diff_norm(n, m + 1, y, y_prev);
 
-        #pragma omp parallel for
         for (i = 0; i < n; i++)
-            for(j = 0; j < m + 1; j++)
+            for (j = 0; j < m + 1; j++)
                 y_prev[i][j] = y[i][j];
         iterations++;
-    } 
-    while (diff > eps);
 
-    free(yj); free(yj1);
-    free(Ay_j); free(Ay_j1);
+    } while (diff > eps);
+
+    free(yj);
+    free(yj1);
+    free(Ay_j);
+    free(Ay_j1);
 
     free_matrix(y_prev, n);
 

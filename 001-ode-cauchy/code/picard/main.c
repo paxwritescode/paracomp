@@ -48,7 +48,8 @@ int main(void)
 {
     // run_test_case();
 
-    study_time_vs_size();
+    // study_time_vs_size();
+    study_time_vs_threads();
 
     return 0;
 }
