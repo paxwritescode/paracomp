@@ -57,7 +57,7 @@ void study_time_vs_size(void)
     fclose(f_file);
 }
 
-void study_time_vs_threads(void)
+void study_dependencies_on_threads(void)
 {
     double t0 = 0.0;
     double t = 1.0;
@@ -72,69 +72,24 @@ void study_time_vs_threads(void)
     int threads[32];
     int num_cases = generate_threads(threads, max_threads);
 
-    FILE *f_file = fopen("results/time_vs_threads.csv", "w");
-    if (!f_file)
-    {
-        perror("fopen");
-        return;
-    }
-    printf("Time vs threads\n");
+    FILE *file_time = fopen("results/time_vs_threads.csv", "w");
+    FILE *file_speedup = fopen("results/speedup_vs_threads.csv", "w");
+    FILE *file_efficiency = fopen("results/efficiency_vs_threads.csv", "w");
 
-    fprintf(f_file, "# threads, time \n\n");
-
-    double **A = generate_matrix(n, 1.0 / n);
-
-    double **rhs = generate_rhs(n, m, t0, t);
-
-    for (k = 0; k < num_cases; k++)
-    {
-        int p = threads[k];
-        omp_set_num_threads(p);
-        printf("p = %d\n", p);
-
-        double t_start = omp_get_wtime();
-        double **y = picard_method(n, rhs, A, eps, t0, t, m);
-        double t_end = omp_get_wtime();
-
-        fprintf(f_file, "%d, %.6lf\n", p, t_end - t_start);
-
-        free_matrix(y, n);
-    }
-
-    free_matrix(rhs, n);
-    free_matrix(A, n);
-    fclose(f_file);
-}
-
-void study_speedup_vs_threads(void)
-{
-    double t0 = 0.0;
-    double t = 1.0;
-    double eps = 1e-6;
-
-    int n = 300;
-    int m = 3000;
-
-    int k = 0;
-
-    int max_threads = omp_get_max_threads();
-    int threads[32];
-    int num_cases = generate_threads(threads, max_threads);
-
-    FILE *f_file = fopen("results/speedup_vs_threads.csv", "w");
-    if (!f_file)
+    if (!file_time || !file_speedup || !file_efficiency)
     {
         perror("fopen");
         return;
     }
 
-    fprintf(f_file, "# threads from 1 to 12\n\n");
-    printf("Speedup vs threads\n");
+    fprintf(file_time, "# threads from 1 to 12\n\n");
+    fprintf(file_speedup, "# threads from 1 to 12\n\n");
+    fprintf(file_efficiency, "# threads from 1 to 12\n\n");
 
     double **A = generate_matrix(n, 1.0 / n);
     double **rhs = generate_rhs(n, m, t0, t);
 
-    /* 1 thread */
+    /* 1 thread, baseline run */
     omp_set_num_threads(1);
     printf("Baseline run (1 thread)\n");
     double t_start = omp_get_wtime();
@@ -142,9 +97,10 @@ void study_speedup_vs_threads(void)
     double t_end = omp_get_wtime();
 
     double T1 = t_end - t_start;
-    printf("T1 = %.6lf\n", T1);
 
-    fprintf(f_file, "1.000000, ");
+    fprintf(file_time, "%.6lf, ", T1);
+    fprintf(file_speedup, "1.000000, ");
+    fprintf(file_efficiency, "1.000000, ");
     free_matrix(y, n);
 
     /* Parallel runs */
@@ -163,13 +119,19 @@ void study_speedup_vs_threads(void)
 
         double Tp = t_end - t_start;
         double speedup = T1 / Tp;
+        double efficiency = T1 / (p * Tp);
 
-        fprintf(f_file, "%.6lf, ", speedup);
+        fprintf(file_time, "%.6lf, ", Tp);
+        fprintf(file_speedup, "%.6lf, ", speedup);
+        fprintf(file_efficiency, "%.6lf, ", efficiency);
 
         free_matrix(y, n);
     }
 
     free_matrix(rhs, n);
     free_matrix(A, n);
-    fclose(f_file);
+
+    fclose(file_time);
+    fclose(file_speedup);
+    fclose(file_efficiency);
 }
