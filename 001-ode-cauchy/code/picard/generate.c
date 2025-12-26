@@ -42,7 +42,7 @@ int generate_threads(int *threads, int max_threads)
     while (p <= max_threads)
     {
         threads[k++] = p;
-        p *= 2;
+        p += 1;
     }
     return k;
 }
