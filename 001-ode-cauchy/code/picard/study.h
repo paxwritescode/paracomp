@@ -10,6 +10,6 @@
 
 void study_time_vs_size(void);
 void study_time_vs_threads(void);
-
+void study_speedup_vs_threads(void);
 
 #endif

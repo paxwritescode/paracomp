@@ -17,7 +17,7 @@ void study_time_vs_size(void)
         printf("n_array[%d] = %d\n", k, n_array[k]);
     }
 
-    //int p = omp_get_max_threads();
+    // int p = omp_get_max_threads();
     int p = 4;
     omp_set_num_threads(p);
 
@@ -97,6 +97,74 @@ void study_time_vs_threads(void)
         double t_end = omp_get_wtime();
 
         fprintf(f_file, "%d, %.6lf\n", p, t_end - t_start);
+
+        free_matrix(y, n);
+    }
+
+    free_matrix(rhs, n);
+    free_matrix(A, n);
+    fclose(f_file);
+}
+
+void study_speedup_vs_threads(void)
+{
+    double t0 = 0.0;
+    double t = 1.0;
+    double eps = 1e-6;
+
+    int n = 300;
+    int m = 3000;
+
+    int k = 0;
+
+    int max_threads = omp_get_max_threads();
+    int threads[32];
+    int num_cases = generate_threads(threads, max_threads);
+
+    FILE *f_file = fopen("results/speedup_vs_threads.csv", "w");
+    if (!f_file)
+    {
+        perror("fopen");
+        return;
+    }
+
+    fprintf(f_file, "# threads from 1 to 12\n\n");
+    printf("Speedup vs threads\n");
+
+    double **A = generate_matrix(n, 1.0 / n);
+    double **rhs = generate_rhs(n, m, t0, t);
+
+    /* 1 thread */
+    omp_set_num_threads(1);
+    printf("Baseline run (1 thread)\n");
+    double t_start = omp_get_wtime();
+    double **y = picard_method(n, rhs, A, eps, t0, t, m);
+    double t_end = omp_get_wtime();
+
+    double T1 = t_end - t_start;
+    printf("T1 = %.6lf\n", T1);
+
+    fprintf(f_file, "1.000000, ");
+    free_matrix(y, n);
+
+    /* Parallel runs */
+    for (k = 0; k < num_cases; k++)
+    {
+        int p = threads[k];
+        if (p == 1)
+            continue;
+
+        omp_set_num_threads(p);
+        printf("p = %d\n", p);
+
+        t_start = omp_get_wtime();
+        y = picard_method(n, rhs, A, eps, t0, t, m);
+        t_end = omp_get_wtime();
+
+        double Tp = t_end - t_start;
+        double speedup = T1 / Tp;
+
+        fprintf(f_file, "%.6lf, ", speedup);
 
         free_matrix(y, n);
     }
