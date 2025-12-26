@@ -25,6 +25,9 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
     /* Iterations of Picard method */
     do
     {
+        for (i = 0; i < n; i++)
+            y[i][0] = 0.0;
+
         for (j = 0; j < m; j++)
         {
             for (i = 0; i < n; i++)
@@ -36,10 +39,11 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
             matrix_mul_vector(n, A, yj, Ay_j);
             matrix_mul_vector(n, A, yj1, Ay_j1);
 
+
             #pragma omp parallel for
             for (i = 0; i < n; i++)
             {
-                y[i][j + 1] = y_prev[i][j] + delta_t / 2.0 * (Ay_j[i] + f[i][j] + Ay_j1[i] + f[i][j + 1]);
+                y[i][j + 1] = y[i][j] + delta_t / 2.0 * (Ay_j[i] + f[i][j] + Ay_j1[i] + f[i][j + 1]);
             }
         }
 
@@ -49,6 +53,11 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
             for (j = 0; j < m + 1; j++)
                 y_prev[i][j] = y[i][j];
         iterations++;
+
+        #pragma omp single
+        {
+            printf("Iter: diff = %.6e\n", diff);
+        }
 
     } while (diff > eps);
 
