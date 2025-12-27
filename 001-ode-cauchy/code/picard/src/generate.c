@@ -47,12 +47,12 @@ int generate_threads(int *threads, int max_threads)
     return k;
 }
 
-double **generate_matrix(int n, double scale)
+double **generate_matrix(int n)
 {
     double **A = alloc_matrix(n, n);
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
-            A[i][j] = (i >= j) ? scale : 0.0;
+            A[i][j] = (i >= j) ? 1.0 : 0.0;
 
     return A;
 }

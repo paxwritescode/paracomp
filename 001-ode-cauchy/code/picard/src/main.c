@@ -13,7 +13,7 @@ void run_test_case(void)
     int m = 3;
     double t_0 = 0.0;
     double t = 0.3;
-    double eps = 1e-6;
+    double eps = 1e-5;
 
     /* test matrix A  */
     double **A = alloc_matrix(n, n);

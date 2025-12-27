@@ -1,10 +1,12 @@
 #include "study.h"
 
+#define MAX_THREADS 12
+
 void study_time_vs_size(void)
 {
     double t0 = 0.0;
-    double t = 1.0;
-    double eps = 1e-6;
+
+    double eps = 1e-5;
 
     int k = 0;
     int cases = 20;
@@ -36,9 +38,10 @@ void study_time_vs_size(void)
     for (k = 0; k < cases; k++)
     {
         int n = n_array[k];
+        double t = 1.0 / ((double)n + 1.0);
 
         printf("k = %d, n_array[%d] = %d\n", k, k, n);
-        double **A = generate_matrix(n, 1.0 / n);
+        double **A = generate_matrix(n);
 
         double **f = generate_rhs(n, m, t0, t);
 
@@ -59,18 +62,20 @@ void study_time_vs_size(void)
 
 void study_dependencies_on_threads(void)
 {
-    double t0 = 0.0;
-    double t = 1.0;
-    double eps = 1e-6;
-
     int n = 300;
     int m = 3000;
+
+    double t0 = 0.0;
+    double t = 1.0 / ((double)n + 1.0);
+    double eps = 1e-5;
 
     int k = 0;
 
     int max_threads = omp_get_max_threads();
-    int threads[32];
-    int num_cases = generate_threads(threads, max_threads);
+    int threads[MAX_THREADS] = {0};
+    int num_cases = generate_threads(
+        threads,
+        max_threads < MAX_THREADS ? max_threads : MAX_THREADS);
 
     FILE *file_time = fopen("results/time_vs_threads.csv", "w");
     FILE *file_speedup = fopen("results/speedup_vs_threads.csv", "w");
@@ -86,12 +91,12 @@ void study_dependencies_on_threads(void)
     fprintf(file_speedup, "# threads from 1 to 12\n\n");
     fprintf(file_efficiency, "# threads from 1 to 12\n\n");
 
-    double **A = generate_matrix(n, 1.0 / n);
+    double **A = generate_matrix(n);
     double **rhs = generate_rhs(n, m, t0, t);
 
     /* 1 thread, baseline run */
     omp_set_num_threads(1);
-    printf("Baseline run (1 thread)\n");
+    printf("Baseline run (p = 1)\n");
     double t_start = omp_get_wtime();
     double **y = picard_method(n, rhs, A, eps, t0, t, m);
     double t_end = omp_get_wtime();

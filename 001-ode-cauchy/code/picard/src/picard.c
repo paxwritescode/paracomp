@@ -26,7 +26,7 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
     do
     {
         for (i = 0; i < n; i++)
-            y[i][0] = 0.0;
+            y[i][0] = 1.0;
 
         for (j = 0; j < m; j++)
         {
@@ -52,7 +52,6 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
                 y_prev[i][j] = y[i][j];
         iterations++;
 
-#pragma omp single
         {
             printf("Iter: diff = %.6e\n", diff);
         }
