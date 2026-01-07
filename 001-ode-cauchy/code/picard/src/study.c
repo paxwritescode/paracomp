@@ -9,7 +9,7 @@ void study_time_vs_size(void)
     double eps = 1e-5;
 
     int k = 0;
-    int cases = 25;
+    int cases = 30;
 
     int n_array[cases];
     int m = 1000;
@@ -37,6 +37,7 @@ void study_time_vs_size(void)
 
     for (k = 0; k < cases; k++)
     {
+        printf("k = %d \n", k);
         int n = n_array[k];
         double t = 1.0 / ((double)n + 1.0);
 
