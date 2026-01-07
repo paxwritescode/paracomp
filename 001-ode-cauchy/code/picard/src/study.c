@@ -9,7 +9,7 @@ void study_time_vs_size(void)
     double eps = 1e-5;
 
     int k = 0;
-    int cases = 20;
+    int cases = 25;
 
     int n_array[cases];
     int m = 1000;
@@ -62,8 +62,8 @@ void study_time_vs_size(void)
 
 void study_dependencies_on_threads(void)
 {
-    int n = 300;
-    int m = 3000;
+    int n = 1000;
+    int m = 3500;
 
     double t0 = 0.0;
     double t = 1.0 / ((double)n + 1.0);

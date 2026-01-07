@@ -28,22 +28,23 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
         for (i = 0; i < n; i++)
             y[i][0] = 1.0;
 
-        for (j = 0; j < m; j++)
-        {
-            for (i = 0; i < n; i++)
+            for (j = 0; j < m; j++)
             {
-                yj[i] = y_prev[i][j];
-                yj1[i] = y_prev[i][j + 1];
-            }
+                for (i = 0; i < n; i++)
+                {
+                    yj[i] = y_prev[i][j];
+                    yj1[i] = y_prev[i][j + 1];
+                }
 
-            matrix_mul_vector(n, A, yj, Ay_j);
-            matrix_mul_vector(n, A, yj1, Ay_j1);
+                matrix_mul_vector(n, A, yj, Ay_j);
+                matrix_mul_vector(n, A, yj1, Ay_j1);
 
-            for (i = 0; i < n; i++)
-            {
-                y[i][j + 1] = y[i][j] + delta_t / 2.0 * (Ay_j[i] + f[i][j] + Ay_j1[i] + f[i][j + 1]);
+#pragma omp for schedule(static)
+                for (i = 0; i < n; i++)
+                {
+                    y[i][j + 1] = y[i][j] + delta_t / 2.0 * (Ay_j[i] + f[i][j] + Ay_j1[i] + f[i][j + 1]);
+                }
             }
-        }
 
         diff = compute_diff_norm(n, m + 1, y, y_prev);
 
@@ -52,9 +53,7 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
                 y_prev[i][j] = y[i][j];
         iterations++;
 
-        {
-            printf("Iter: diff = %.6e\n", diff);
-        }
+        printf("Iter: diff = %.6e\n", diff);
 
     } while (diff > eps);
 
