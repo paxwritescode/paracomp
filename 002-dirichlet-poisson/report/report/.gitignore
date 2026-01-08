@@ -1,0 +1,16 @@
+./minted-main
+*.aux
+*.log
+content.pdf
+LICENSE
+*.bbl
+*.bcf
+*.blg
+*.out
+*.xmp
+*.gz
+*.toc
+*.xwm
+*.xml
+templates/*.otf
+templates/*.bbx
