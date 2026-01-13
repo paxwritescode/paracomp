@@ -16,11 +16,10 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
 
     double diff = 0;
 
-    double *yj = calloc(n, sizeof(double));
-    double *yj1 = calloc(n, sizeof(double));
-
-    double *Ay_j = calloc(n, sizeof(double));
-    double *Ay_j1 = calloc(n, sizeof(double));
+    /* Initial condition */
+    for (i = 0; i < n; i++)
+        for (j = 0; j < m + 1; j++)
+            y_prev[i][j] = 1.0;
 
     /* Iterations of Picard method */
     do
@@ -28,6 +27,15 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
         for (i = 0; i < n; i++)
             y[i][0] = 1.0;
 
+#pragma omp parallel private(i)
+        {
+            double *yj = calloc(n, sizeof(double));
+            double *yj1 = calloc(n, sizeof(double));
+
+            double *Ay_j = calloc(n, sizeof(double));
+            double *Ay_j1 = calloc(n, sizeof(double));
+
+#pragma omp for schedule(static)
             for (j = 0; j < m; j++)
             {
                 for (i = 0; i < n; i++)
@@ -39,12 +47,16 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
                 matrix_mul_vector(n, A, yj, Ay_j);
                 matrix_mul_vector(n, A, yj1, Ay_j1);
 
-#pragma omp for schedule(static)
                 for (i = 0; i < n; i++)
                 {
-                    y[i][j + 1] = y[i][j] + delta_t / 2.0 * (Ay_j[i] + f[i][j] + Ay_j1[i] + f[i][j + 1]);
+                    y[i][j + 1] = 1.0 + delta_t / 2.0 * (Ay_j[i] + f[i][j] + Ay_j1[i] + f[i][j + 1]);
                 }
             }
+            free(yj);
+            free(yj1);
+            free(Ay_j);
+            free(Ay_j1);
+        }
 
         diff = compute_diff_norm(n, m + 1, y, y_prev);
 
@@ -57,12 +69,7 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
 
     } while (diff > eps);
 
-    free(yj);
-    free(yj1);
-    free(Ay_j);
-    free(Ay_j1);
-
-    free_matrix(y_prev, n);
+        free_matrix(y_prev, n);
 
     printf("%d iterations\n", iterations);
 

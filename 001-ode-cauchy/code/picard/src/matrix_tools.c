@@ -59,7 +59,7 @@ void matrix_mul_vector(int n, double **A, double *y_m, double *res)
 {
     int i = 0, j = 0;
 
-#pragma omp parallel for private(j)
+// #pragma omp parallel for private(j)
     for (i = 0; i < n; i++)
     {
         res[i] = 0.0;

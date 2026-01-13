@@ -19,8 +19,7 @@ void study_time_vs_size(void)
         printf("n_array[%d] = %d\n", k, n_array[k]);
     }
 
-    // int p = omp_get_max_threads();
-    int p = 4;
+    int p = omp_get_max_threads();
     omp_set_num_threads(p);
 
     FILE *f_file = fopen("results/time_vs_size.csv", "w");
@@ -37,7 +36,6 @@ void study_time_vs_size(void)
 
     for (k = 0; k < cases; k++)
     {
-        printf("k = %d \n", k);
         int n = n_array[k];
         double t = 1.0 / ((double)n + 1.0);
 
