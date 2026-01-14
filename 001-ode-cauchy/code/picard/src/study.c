@@ -59,13 +59,13 @@ void study_time_vs_size(void)
     fclose(f_file);
 }
 
-void study_dependencies_on_threads(void)
+void study_dependencies_on_threads(double C)
 {
     int n = 1000;
     int m = 3500;
 
     double t0 = 0.0;
-    double t = 1.0 / ((double)n + 1.0);
+    double t = C / ((double)n + 1.0);
     double eps = 1e-5;
 
     int k = 0;

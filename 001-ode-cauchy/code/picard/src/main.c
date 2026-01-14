@@ -16,15 +16,20 @@ void run_test_case(void)
     double eps = 1e-5;
 
     /* test matrix A  */
+    printf("TEST CASE FROM REPORT\n\n");
     double **A = alloc_matrix(n, n);
     for (int i = 0; i < n; i++)
+    {
         for (int j = 0; j < n; j++)
-            A[i][j] = (i >= j) ? 1.0 : 0.0;
+        {
+            A[i][j] = (i <= j) ? 1.0 : 0.0;
+            printf("%lf ", A[i][j]);
+        }
+        printf("\n");
+    }
 
     /* test RHS */
     double **f = generate_test_rhs(n, m, t_0, t);
-
-    printf("TEST CASE FROM REPORT\n\n");
 
     /* run Picard */
     double **y = picard_method(n, f, A, eps, t_0, t, m);
@@ -46,10 +51,10 @@ void run_test_case(void)
 
 int main(void)
 {
-    // run_test_case();
+    run_test_case();
 
     // study_time_vs_size();
-    study_dependencies_on_threads();
+    // study_dependencies_on_threads(250.0);
 
     return 0;
 }

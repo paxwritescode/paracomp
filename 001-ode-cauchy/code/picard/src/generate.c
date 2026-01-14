@@ -13,9 +13,9 @@ double **generate_test_rhs(int n, int m, double t_0, double t)
     {
         double tj = t_0 + j * delta_t;
 
-        f[0][j] = tj;
-        f[1][j] = tj * tj;
-        f[2][j] = sin(tj);
+        f[0][j] = sin(tj);
+        f[1][j] = sin(tj + 1);
+        f[2][j] = sin(tj + 2);
     }
 
     return f;

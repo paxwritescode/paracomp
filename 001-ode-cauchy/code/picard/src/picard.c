@@ -16,6 +16,8 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
 
     double diff = 0;
 
+    double initial = 1.0;
+
     /* Initial condition */
     for (i = 0; i < n; i++)
         for (j = 0; j < m + 1; j++)
@@ -49,7 +51,7 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
 
                 for (i = 0; i < n; i++)
                 {
-                    y[i][j + 1] = 1.0 + delta_t / 2.0 * (Ay_j[i] + f[i][j] + Ay_j1[i] + f[i][j + 1]);
+                    y[i][j + 1] = initial + delta_t / 2.0 * (Ay_j[i] + f[i][j] + Ay_j1[i] + f[i][j + 1]);
                 }
             }
             free(yj);
