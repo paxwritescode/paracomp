@@ -48,7 +48,7 @@ void study_time_vs_size(void)
         double **y = picard_method(n, f, A, eps, t0, t, m);
         double t_end = omp_get_wtime();
 
-        printf("%d, %lf\n", n, t_end - t_start);
+        printf("%lf\n", t_end - t_start);
         fprintf(f_file, "%.6lf, ", t_end - t_start);
 
         free_matrix(y, n);

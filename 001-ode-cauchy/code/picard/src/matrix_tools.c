@@ -59,11 +59,18 @@ void matrix_mul_vector(int n, double **A, double *y_m, double *res)
 {
     int i = 0, j = 0;
 
-// #pragma omp parallel for private(j)
+    // #pragma omp parallel for private(j)
     for (i = 0; i < n; i++)
     {
         res[i] = 0.0;
         for (j = 0; j < n; j++)
             res[i] += A[i][j] * y_m[j];
     }
+}
+
+void swap_arrays(double ***y1, double ***y2)
+{
+    double **tmp = *y1;
+    *y1 = *y2;
+    *y2 = tmp;
 }

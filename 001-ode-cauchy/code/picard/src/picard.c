@@ -62,16 +62,15 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
 
         diff = compute_diff_norm(n, m + 1, y, y_prev);
 
-        for (i = 0; i < n; i++)
-            for (j = 0; j < m + 1; j++)
-                y_prev[i][j] = y[i][j];
+        swap_arrays(&y, &y_prev);
+
         iterations++;
 
         printf("Iter: diff = %.6e\n", diff);
 
     } while (diff > eps);
 
-        free_matrix(y_prev, n);
+    free_matrix(y_prev, n);
 
     printf("%d iterations\n", iterations);
 
