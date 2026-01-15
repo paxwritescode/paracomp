@@ -4,7 +4,7 @@
 #include "generate.h"
 #include "matrix_tools.h"
 
-double **picard_method(int n, double **f, double **A, double eps, double t_0, double t, int m)
+double **picard_method(int n, double **f, double **A, double eps, double t_0, double t, int m, FILE *f_diff, FILE *f_norm)
 {
     int i = 0, j = 0;
     int iterations = 0;
@@ -17,6 +17,8 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
     double diff = 0;
 
     double initial = 1.0;
+
+    double solution_norm_j = 0;
 
     /* Initial condition */
     for (i = 0; i < n; i++)
@@ -61,6 +63,8 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
         }
 
         diff = compute_diff_norm(n, m + 1, y, y_prev);
+        if (f_diff)
+            fprintf(f_diff, "%.6lf, ", diff);
 
         swap_arrays(&y, &y_prev);
 
@@ -70,9 +74,22 @@ double **picard_method(int n, double **f, double **A, double eps, double t_0, do
 
     } while (diff > eps);
 
-    free_matrix(y_prev, n);
 
     printf("%d iterations\n", iterations);
 
+    for (j = 0; j <= m; j++)
+    {
+        double sum = 0.0;
+        for (i = 0; i < n; i++)
+        {
+            sum += y[i][j] * y[i][j];
+        }
+
+        solution_norm_j = sqrt(sum);
+        if (f_norm)
+            fprintf(f_norm, "%.6lf, ", solution_norm_j);
+    }
+
+    free_matrix(y_prev, n);
     return y;
 }

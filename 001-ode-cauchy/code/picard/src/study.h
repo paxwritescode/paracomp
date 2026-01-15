@@ -10,5 +10,6 @@
 
 void study_time_vs_size(void);
 void study_dependencies_on_threads(double C);
+void print_norm_diff(double C);
 
 #endif

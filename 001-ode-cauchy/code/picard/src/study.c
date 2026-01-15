@@ -19,7 +19,7 @@ void study_time_vs_size(void)
         printf("n_array[%d] = %d\n", k, n_array[k]);
     }
 
-    int p = omp_get_max_threads();
+    int p = 4;
     omp_set_num_threads(p);
 
     FILE *f_file = fopen("results/time_vs_size.csv", "w");
@@ -45,7 +45,7 @@ void study_time_vs_size(void)
         double **f = generate_rhs(n, m, t0, t);
 
         double t_start = omp_get_wtime();
-        double **y = picard_method(n, f, A, eps, t0, t, m);
+        double **y = picard_method(n, f, A, eps, t0, t, m, NULL, NULL);
         double t_end = omp_get_wtime();
 
         printf("%lf\n", t_end - t_start);
@@ -61,6 +61,7 @@ void study_time_vs_size(void)
 
 void study_dependencies_on_threads(double C)
 {
+    omp_set_dynamic(0);
     int n = 1000;
     int m = 3500;
 
@@ -97,7 +98,7 @@ void study_dependencies_on_threads(double C)
     omp_set_num_threads(1);
     printf("Baseline run (p = 1)\n");
     double t_start = omp_get_wtime();
-    double **y = picard_method(n, rhs, A, eps, t0, t, m);
+    double **y = picard_method(n, rhs, A, eps, t0, t, m, NULL, NULL);
     double t_end = omp_get_wtime();
 
     double T1 = t_end - t_start;
@@ -118,7 +119,7 @@ void study_dependencies_on_threads(double C)
         printf("p = %d\n", p);
 
         t_start = omp_get_wtime();
-        y = picard_method(n, rhs, A, eps, t0, t, m);
+        y = picard_method(n, rhs, A, eps, t0, t, m, NULL, NULL);
         t_end = omp_get_wtime();
 
         double Tp = t_end - t_start;
@@ -138,4 +139,35 @@ void study_dependencies_on_threads(double C)
     fclose(file_time);
     fclose(file_speedup);
     fclose(file_efficiency);
+}
+
+void print_norm_diff(double C)
+{
+    printf("Solution visualization\n\n");
+    FILE* f_norm = fopen("results/norm.csv", "w");
+    FILE* f_diff = fopen("results/diff.csv", "w");
+
+    if (!f_norm || !f_diff)
+    {
+        perror("fopen");
+        return;
+    }
+
+    int p = 4;
+    omp_set_num_threads(p);
+
+    int n = 5, m = 10;
+    double t0 = 0, t = C / (n + 1);
+    double **A = generate_matrix(n);
+    double **rhs = generate_rhs(n, m, t0, t);
+    double eps = 1e-5;
+
+    double **y = picard_method(n, rhs, A, eps, t0, t, m, f_diff, f_norm);
+
+    free_matrix(y, n);
+    free_matrix(rhs, n);
+    free_matrix(A, n);
+
+    fclose(f_norm);
+    fclose(f_diff);
 }

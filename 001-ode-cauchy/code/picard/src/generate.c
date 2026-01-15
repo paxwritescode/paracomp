@@ -3,24 +3,6 @@
 
 /* n dimensions, m + 1 nodes */
 
-/* test case: t_0 = 0, t = 0.3, m = 3, n = 3*/
-double **generate_test_rhs(int n, int m, double t_0, double t)
-{
-    double delta_t = (t - t_0) / m;
-    double **f = alloc_matrix(n, m + 1);
-
-    for (int j = 0; j <= m; j++)
-    {
-        double tj = t_0 + j * delta_t;
-
-        f[0][j] = sin(tj);
-        f[1][j] = sin(tj + 1);
-        f[2][j] = sin(tj + 2);
-    }
-
-    return f;
-}
-
 double **generate_rhs(int n, int m, double t0, double t)
 {
     double **f = alloc_matrix(n, m + 1);
