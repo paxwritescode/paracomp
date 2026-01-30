@@ -10,4 +10,5 @@ add_executable(seidel
     main.c
     seidel.c
     tools.c
+    functions.c
 )

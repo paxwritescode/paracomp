@@ -22,11 +22,11 @@ double **alloc_matrix(int m, int n)
 
 double max_in_matrix_diff(double** A, double** B, int m, int n)
 {
-    double max = A[0][0] - B[0][0];
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < m; j++)
+    double max = fabs(A[0][0] - B[0][0]);
+    for (int i = 0; i < m; i++)
+        for (int j = 0; j < n; j++)
             if (fabs(A[i][j] - B[i][j]) > max)
-                max = A[i][j];
+                max = fabs(A[i][j] - B[i][j]);
 
     return max;
 }
@@ -46,4 +46,11 @@ void init_matrix(double** A, int m, int n, double value)
     for (int i = 0; i < m; i++)
         for (int j = 0; j < n; j++)
             A[i][j] = value;
+}
+
+void swap_matrices(double ***A, double ***B)
+{
+    double **tmp = *A;
+    *A = *B;
+    *B = tmp;
 }
