@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <mpi.h>
 
 #include "seidel.h"
 #include "def.h"
@@ -14,7 +15,11 @@ void run_test_case(void)
 
     double eps = 1e-6;
 
-    double **V = seidel(right_border, upper_border, Nx_test, Ny_test, eps, &f, &u_0y, &u_piy, &u_x1, &u_x0, iter_test);
+    double **V = seidel(right_border, upper_border, 
+        Nx_test, Ny_test, 
+        eps, 
+        &f, &u_0y, &u_piy, &u_x1, &u_x0, 
+        iter_test);
 
     for (int j = Ny_test; j >= 0; j--)
     {
@@ -28,9 +33,19 @@ void run_test_case(void)
     free_matrix(V, Nx_test + 1);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
-    run_test_case();
+    MPI_Init(&argc, &argv);
 
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    if (rank == 0)
+    {
+        run_test_case();
+    }
+
+    MPI_Finalize();
     return 0;
 }
