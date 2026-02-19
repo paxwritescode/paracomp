@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <mpi.h>
 
 #include "seidel.h"
 #include "def.h"
@@ -28,9 +29,20 @@ void run_test_case(void)
     free_matrix(V, Nx_test + 1);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
-    run_test_case();
+    MPI_Init(&argc, &argv);
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    if (rank == 0)
+        printf("Done :)");
+
+    //run_test_case(rank, size);
+
+    MPI_Finalize();
 
     return 0;
 }
