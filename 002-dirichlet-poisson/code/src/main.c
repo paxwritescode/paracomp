@@ -6,27 +6,41 @@
 #include "functions.h"
 #include "tools.h"
 
-void run_test_case(void)
+void run_test_case(int rank, int size)
 {
-    printf("TEST CASE FROM REPORT: \n\n");
+    if (rank == 0)
+        printf("TEST CASE FROM REPORT: \n\n");
 
     int Nx_test = 4, Ny_test = 2, iter_test = 2;
     double right_border = PI, upper_border = 1.0;
 
     double eps = 1e-6;
 
-    double **V = seidel(right_border, upper_border, Nx_test, Ny_test, eps, &f, &u_0y, &u_piy, &u_x1, &u_x0, iter_test);
+    int local_Nx = 0;
 
-    for (int j = Ny_test; j >= 0; j--)
+    double **V = seidel(right_border, upper_border, 
+        Nx_test, Ny_test, 
+        local_Nx,
+        eps, 
+        &f, 
+        &u_0y, &u_piy, &u_x1, &u_x0, 
+        iter_test, 
+        size, rank);
+
+    if (V != NULL)
     {
-        for (int i = 0; i < Nx_test + 1; i++)
+        for (int j = Ny_test; j >= 0; j--)
         {
-            printf("%.4lf ", V[i][j]);
+            for (int i = 0; i < Nx_test + 1; i++)
+            {
+                printf("%.4lf ", V[i][j]);
+            }
+            printf("\n");
         }
-        printf("\n");
+
+        free_matrix(V, Nx_test + 1);
     }
 
-    free_matrix(V, Nx_test + 1);
 }
 
 int main(int argc, char **argv)
@@ -37,10 +51,7 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    if (rank == 0)
-        printf("Done :)");
-
-    //run_test_case(rank, size);
+    run_test_case(rank, size);
 
     MPI_Finalize();
 
