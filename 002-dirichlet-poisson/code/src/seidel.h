@@ -5,7 +5,6 @@
 
 double **seidel(double border_x, double border_y,
                 int Nx, int Ny,
-                int local_Nx,
                 double eps,
                 double (*f)(double, double),
                 double (*u_left)(double), double (*u_right)(double),

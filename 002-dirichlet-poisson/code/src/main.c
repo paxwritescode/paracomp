@@ -20,7 +20,6 @@ void run_test_case(int rank, int size)
 
     double **V = seidel(right_border, upper_border, 
         Nx_test, Ny_test, 
-        local_Nx,
         eps, 
         &f, 
         &u_0y, &u_piy, &u_x1, &u_x0, 
