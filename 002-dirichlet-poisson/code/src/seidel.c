@@ -33,7 +33,7 @@ double **seidel(double border_x, double border_y,
                 int max_iter,
                 int size, int rank)
 {
-    if (size > Nx + 1)
+    if (size > Nx)
     {
         printf("Domain size is not valid: size = %d, Nx = %d\n", size, Nx);
         return NULL;
@@ -80,7 +80,7 @@ double **seidel(double border_x, double border_y,
     for (int i_local = 0; i_local <= local_Nx + 1; i_local++)
     {
         int i_global = start_x + i_local - 1;
-        
+
         if (i_global >= 0 && i_global <= Nx)
         {
             for (int j = 0; j <= Ny; j++)
@@ -92,7 +92,7 @@ double **seidel(double border_x, double border_y,
                 else if (j == Ny)
                     V[i_local][j] = u_up(i_global * h_x);
                 else
-                    V[i_local][j] = 1.0; // start value
+                    V[i_local][j] = 0.0; // start value
             }
         }
     }
