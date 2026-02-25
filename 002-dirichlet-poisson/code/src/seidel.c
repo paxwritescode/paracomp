@@ -64,18 +64,6 @@ double **seidel(double border_x, double border_y,
 
     int start_x = rank * base + (rank < remainder ? rank : remainder);
 
-    // diagnostic print
-    for (int p = 0; p < size; p++)
-    {
-        if (rank == p)
-        {
-            printf("rank %d: local_Nx = %d, start_x = %d\n\n",
-                rank, local_Nx, start_x);
-        }
-
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
     // local mesh initialization
     for (int i_local = 0; i_local <= local_Nx + 1; i_local++)
     {
@@ -107,22 +95,6 @@ double **seidel(double border_x, double border_y,
     {
         for (int j = 0; j <= Ny; j++)
             V[local_Nx][j] = u_right(j * h_y); 
-    }
-
-    for (int p = 0; p < size; p++)
-    {
-        if (rank == p)
-        {
-            printf("rank %d local grid:\n", rank);
-            for (int j = Ny; j >= 0; j--)
-            {
-                for (int i = 0; i <= local_Nx + 1; i++)
-                    printf("%.4lf ", V[i][j]);
-                printf("\n");
-            }
-            printf("\n");
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     // main cycle

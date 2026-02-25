@@ -9,10 +9,11 @@ set(CMAKE_BUILD_TYPE Debug)
 find_package(MPI REQUIRED)
 
 add_executable(seidel
-main.c
-seidel.c
-tools.c
-functions.c
+    main.c
+    seidel.c
+    tools.c
+    functions.c
+    study.c
 )
 
 target_link_libraries(seidel MPI::MPI_C)

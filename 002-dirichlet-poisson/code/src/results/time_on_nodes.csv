@@ -1,0 +1,4 @@
+# Nx and Ny simultaneously from 4 to 256, size = 4
+# 2run: mpirun -np 4 -env FI_PROVIDER=tcp ./build/seidel 
+
+1.004801, 2.513110, 7.673640, 23.379999, 71.235511, 199.222248, 474.541853
