@@ -71,11 +71,8 @@ void study_dependencies_on_nodes(void)
 
 void study_dependencies_on_threads(int rank, int size)
 {
-    if (rank == 0)
-        printf("Running experiment with %d threads\n", size);
-
-    int Nx = 200;
-    int Ny = 200;
+    int Nx = 64;
+    int Ny = 64;
     int max_iter = 10000;
     double eps = 1e-6;
 

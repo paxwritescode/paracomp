@@ -100,11 +100,11 @@ double **seidel(double border_x, double border_y,
     // main cycle
     do
     {
-        exchange_boundaries(V, local_Nx, Ny, rank, size);
-
         diff = 0.0;
 
-        for (int i = 1; i <= local_Nx; i++)
+        // RED UPDATE
+
+        for (int i = 1; i <= local_Nx; i++) 
         {
             int i_global = start_x + i - 1;
             if (i_global < 0 || i_global > Nx)
@@ -116,7 +116,9 @@ double **seidel(double border_x, double border_y,
             if (i_global == 0 || i_global == Nx)
                 continue;
 
-            for (int j = 1; j < Ny; j++)
+            int j_start = (i_global % 2 == 0) ? 1 : 2;
+
+            for (int j = j_start; j < Ny; j += 2)
             {
                 double old = V[i][j];
 
@@ -131,14 +133,47 @@ double **seidel(double border_x, double border_y,
                     diff = local_diff;
             }
         }
+
+        exchange_boundaries(V, local_Nx, Ny, rank, size);
+
+        // BLACK UPDATE
+
+        for (int i = 1; i <= local_Nx; i++)
+        {
+            int i_global = start_x + i - 1;
+
+            if (i_global == 0 || i_global == Nx)
+                continue;
+
+            int j_start = (i_global % 2 == 0) ? 2 : 1;
+
+            for (int j = j_start; j < Ny; j += 2)
+            {
+                double old = V[i][j];
+
+                V[i][j] =
+                    (((V[i + 1][j] + V[i - 1][j]) / (h_x * h_x)) +
+                    ((V[i][j + 1] + V[i][j - 1]) / (h_y * h_y)) -
+                    f(i_global * h_x, j * h_y)) /
+                    (2.0 / (h_x * h_x) + 2.0 / (h_y * h_y));
+
+                double local_diff = fabs(V[i][j] - old);
+                if (local_diff > diff)
+                    diff = local_diff;
+            }
+        }
+
+        exchange_boundaries(V, local_Nx, Ny, rank, size);
     
         double global_diff;
+
         MPI_Allreduce(&diff, &global_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
         diff = global_diff;
 
         iterations++;
+        // if (rank == 0)
+        //     printf("iter %d global diff = %.10lf\n", iterations, diff);
     } while (diff > eps && iterations < max_iter);
-    printf("rank %d iterations = %d\n", rank, iterations);
     
     int send_count = local_Nx * (Ny + 1);
 
@@ -211,7 +246,10 @@ double **seidel(double border_x, double border_y,
     }
 
     if (rank == 0)
+    {
+        printf("%d iterations\n", iterations);
         return V_global;
+    }
     else
         return NULL;
 }
