@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // run_test_case(rank, size);
+    // // run_test_case(rank, size);
 
     // study_dependencies_on_nodes();
     study_dependencies_on_threads(rank, size);
