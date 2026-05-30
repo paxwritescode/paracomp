@@ -1,0 +1,40 @@
+paks@Paxs-MacBook-Pro build % mpirun -np 1 -env FI_PROVIDER=tcp ./seidel
+
+TEST CASE FROM REPORT: 
+
+rank 0: i_start=1, i_end=39, local_Nx=39
+13013 iterations
+Time: 4.930303 seconds
+paks@Paxs-MacBook-Pro build % mpirun -np 2 -env FI_PROVIDER=tcp ./seidel
+
+TEST CASE FROM REPORT: 
+
+rank 0: i_start=1, i_end=20, local_Nx=20
+rank 1: i_start=21, i_end=39, local_Nx=19
+13017 iterations
+Time: 2.259660 seconds
+paks@Paxs-MacBook-Pro build % mpirun -np 4 -env FI_PROVIDER=tcp ./seidel
+
+TEST CASE FROM REPORT: 
+
+rank 0: i_start=1, i_end=10, local_Nx=10
+rank 1: i_start=11, i_end=20, local_Nx=10
+rank 2: i_start=21, i_end=30, local_Nx=10
+rank 3: i_start=31, i_end=39, local_Nx=9
+13034 iterations
+Time: 1.770792 seconds
+paks@Paxs-MacBook-Pro build % mpirun -np 8 -env FI_PROVIDER=tcp ./seidel
+
+TEST CASE FROM REPORT: 
+
+rank 0: i_start=1, i_end=5, local_Nx=5
+rank 1: i_start=6, i_end=10, local_Nx=5
+rank 2: i_start=11, i_end=15, local_Nx=5
+rank 3: i_start=16, i_end=20, local_Nx=5
+rank 4: i_start=21, i_end=25, local_Nx=5
+rank 5: i_start=26, i_end=30, local_Nx=5
+rank 6: i_start=31, i_end=35, local_Nx=5
+rank 7: i_start=36, i_end=39, local_Nx=4
+13052 iterations
+Time: 1.826386 seconds
+paks@Paxs-MacBook-Pro build % 

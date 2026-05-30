@@ -13,6 +13,7 @@ add_executable(seidel
     seidel.c
     tools.c
     functions.c
+    test.c
     study.c
 )
 

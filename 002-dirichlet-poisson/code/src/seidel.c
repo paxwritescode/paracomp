@@ -1,28 +1,6 @@
 #include "seidel.h"
 #include "tools.h"
-
-void exchange_boundaries(double **V, int local_Nx, int Ny, int rank, int size)
-{
-    MPI_Status status;
-
-    if (rank < size - 1)
-    {
-        MPI_Sendrecv(
-            V[local_Nx], Ny + 1, MPI_DOUBLE, rank + 1, 0,
-            V[local_Nx + 1], Ny + 1, MPI_DOUBLE, rank + 1, 0,
-            MPI_COMM_WORLD, &status
-        );
-    }
-
-    if (rank > 0)
-    {
-        MPI_Sendrecv(
-            V[1], Ny + 1, MPI_DOUBLE, rank - 1, 0,
-            V[0], Ny + 1, MPI_DOUBLE, rank - 1, 0,
-            MPI_COMM_WORLD, &status
-        );
-    }
-}
+#include "def.h"
 
 double **seidel(double border_x, double border_y,
                 int Nx, int Ny,
@@ -30,199 +8,205 @@ double **seidel(double border_x, double border_y,
                 double (*f)(double, double),
                 double (*u_left)(double), double (*u_right)(double),
                 double (*u_up)(double), double (*u_down)(double),
-                int max_iter,
-                int size, int rank)
+                int max_iter)
 {
-    if (size > Nx)
-    {
-        printf("Domain size is not valid: size = %d, Nx = %d\n", size, Nx);
-        return NULL;
-    }
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int N_inner = Nx - 1;
+
+    int base = N_inner / size;
+    int rem  = N_inner % size;
 
     int local_Nx;
+    int i_start, i_end;
+
+    if (rank < rem) {
+        local_Nx = base + 1;
+        i_start = 1 + rank * local_Nx;
+    } else {
+        local_Nx = base;
+        i_start = 1 + rem * (base + 1) + (rank - rem) * base;
+    }
+
+    i_end = i_start + local_Nx - 1;
+
+    printf("rank %d: i_start=%d, i_end=%d, local_Nx=%d\n",
+       rank, i_start, i_end, local_Nx);
+
+    double **V_cur = alloc_matrix(local_Nx + 2, Ny + 1);
+    double **V_prev = alloc_matrix(local_Nx + 2, Ny + 1);
 
     double h_x = border_x / (double)Nx;
     double h_y = border_y / (double)Ny;
+
+    init_matrix(V_cur, local_Nx + 2, Ny + 1, 1.0);
 
     int i = 0, j = 0, iterations = 0;
 
     double diff = 1.0;
 
-    // (Nx + 1) nodes
-    int base = (Nx + 1) / size;
-    int remainder = (Nx + 1) % size;
-
-    // distribution
-    if (rank < remainder)
-        local_Nx = base + 1;
-    else
-        local_Nx = base;
-
-    // + 2 ghost columns
-    int local_width = local_Nx + 2;
-    double **V = alloc_matrix(local_width, Ny + 1);
-
-    int start_x = rank * base + (rank < remainder ? rank : remainder);
-
-    // local mesh initialization
-    for (int i_local = 0; i_local <= local_Nx + 1; i_local++)
-    {
-        int i_global = start_x + i_local - 1;
-
-        if (i_global >= 0 && i_global <= Nx)
-        {
-            for (int j = 0; j <= Ny; j++)
-            {
-                // lower
-                if (j == 0)
-                    V[i_local][j] = u_down(i_global * h_x);
-                // upper
-                else if (j == Ny)
-                    V[i_local][j] = u_up(i_global * h_x);
-                else
-                    V[i_local][j] = 0.0; // start value
-            }
-        }
-    }
-
+    /* LEFT boundary: i = 0 */
     if (rank == 0)
     {
-        for (int j = 0; j <= Ny; j++)
-            V[1][j] = u_left(j * h_y);
+        for (j = 0; j < Ny + 1; j++)
+        {
+            V_prev[0][j] = u_left(j * h_y);
+            V_cur[0][j]  = V_prev[0][j];
+        }
     }
 
+    /* RIGHT boundary: i = Nx */
     if (rank == size - 1)
     {
-        for (int j = 0; j <= Ny; j++)
-            V[local_Nx][j] = u_right(j * h_y); 
+        for (j = 0; j < Ny + 1; j++)
+        {
+            V_prev[local_Nx + 1][j] = u_right(j * h_y);
+            V_cur[local_Nx + 1][j]  = V_prev[local_Nx + 1][j];
+        }
     }
 
-    // main cycle
+    for (i = 1; i <= local_Nx; i++)
+    {
+        int i_global = i_start + (i - 1);
+
+        V_prev[i][0] = u_down(i_global * h_x);
+        V_cur[i][0]  = V_prev[i][0];
+    }
+
+    for (i = 1; i <= local_Nx; i++)
+    {
+        int i_global = i_start + (i - 1);
+
+        V_prev[i][Ny] = u_up(i_global * h_x);
+        V_cur[i][Ny]  = V_prev[i][Ny];
+    }
+
+    double *send_left  = malloc((Ny + 1) * sizeof(double));
+    double *send_right = malloc((Ny + 1) * sizeof(double));
+    double *recv_left  = malloc((Ny + 1) * sizeof(double));
+    double *recv_right = malloc((Ny + 1) * sizeof(double));
+
+    /* CENTRAL NODES */
     do
     {
-        diff = 0.0;
+        int left  = rank - 1;
+        int right = rank + 1;
 
-        // RED UPDATE
+        if (left < 0) left = MPI_PROC_NULL;
+        if (right >= size) right = MPI_PROC_NULL;
 
-        for (int i = 1; i <= local_Nx; i++) 
+        for (j = 0; j < Ny + 1; j++)
         {
-            int i_global = start_x + i - 1;
-            if (i_global < 0 || i_global > Nx)
-            {
-                printf("Error in i_global\n");
-                return NULL;
-            }
-
-            if (i_global == 0 || i_global == Nx)
-                continue;
-
-            int j_start = (i_global % 2 == 0) ? 1 : 2;
-
-            for (int j = j_start; j < Ny; j += 2)
-            {
-                double old = V[i][j];
-
-                V[i][j] =
-                    (((V[i + 1][j] + V[i - 1][j]) / (h_x * h_x)) +
-                    ((V[i][j + 1] + V[i][j - 1]) / (h_y * h_y)) -
-                    f(i_global * h_x, j * h_y)) /
-                    (2.0 / (h_x * h_x) + 2.0 / (h_y * h_y));
-            
-                double local_diff = fabs(V[i][j] - old);
-                if (local_diff > diff)
-                    diff = local_diff;
-            }
+            send_right[j] = V_prev[local_Nx][j];
+            send_left[j]  = V_prev[1][j];
         }
 
-        exchange_boundaries(V, local_Nx, Ny, rank, size);
+        MPI_Sendrecv(
+            send_right, Ny + 1, MPI_DOUBLE,
+            right, 0,
+            recv_left, Ny + 1, MPI_DOUBLE,
+            left, 0,
+            MPI_COMM_WORLD, MPI_STATUS_IGNORE
+        );
 
-        // BLACK UPDATE
+        MPI_Sendrecv(
+            send_left, Ny + 1, MPI_DOUBLE,
+            left, 1,
+            recv_right, Ny + 1, MPI_DOUBLE,
+            right, 1,
+            MPI_COMM_WORLD, MPI_STATUS_IGNORE
+        );
 
-        for (int i = 1; i <= local_Nx; i++)
+        for (j = 0; j < Ny + 1; j++)
         {
-            int i_global = start_x + i - 1;
-
-            if (i_global == 0 || i_global == Nx)
-                continue;
-
-            int j_start = (i_global % 2 == 0) ? 2 : 1;
-
-            for (int j = j_start; j < Ny; j += 2)
-            {
-                double old = V[i][j];
-
-                V[i][j] =
-                    (((V[i + 1][j] + V[i - 1][j]) / (h_x * h_x)) +
-                    ((V[i][j + 1] + V[i][j - 1]) / (h_y * h_y)) -
-                    f(i_global * h_x, j * h_y)) /
-                    (2.0 / (h_x * h_x) + 2.0 / (h_y * h_y));
-
-                double local_diff = fabs(V[i][j] - old);
-                if (local_diff > diff)
-                    diff = local_diff;
-            }
+            V_prev[0][j] = recv_left[j];
+            V_prev[local_Nx + 1][j] = recv_right[j];
         }
 
-        exchange_boundaries(V, local_Nx, Ny, rank, size);
-    
-        double global_diff;
+        for (i = 1; i <= local_Nx; i++)
+        {
+            int i_global = i_start + (i - 1);
+            for (j = 1; j < Ny; j++)
+                V_cur[i][j] =
+                    ((((V_prev[i + 1][j] + V_cur[i - 1][j]) /
+                       (h_x * h_x)) +
+                      (V_prev[i][j + 1] + V_cur[i][j - 1]) /
+                          (h_y * h_y)) -
+                     f(i_global * h_x, j * h_y)) /
+                    (2.0 / (h_x * h_x) + 2.0 / (h_y * h_y));
+        }
+        
+        double local_diff = max_in_matrix_diff(V_prev, V_cur, local_Nx + 2, Ny + 1);
+        MPI_Allreduce(
+            &local_diff,
+            &diff,
+            1,
+            MPI_DOUBLE,
+            MPI_MAX,
+            MPI_COMM_WORLD
+        );
 
-        MPI_Allreduce(&diff, &global_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        diff = global_diff;
+        swap_matrices(&V_prev, &V_cur);
 
         iterations++;
-        // if (rank == 0)
-        //     printf("iter %d global diff = %.10lf\n", iterations, diff);
     } while (diff > eps && iterations < max_iter);
+
+    swap_matrices(&V_prev, &V_cur);
+
+    free_matrix(V_prev, local_Nx + 2);
+
+    if (rank == 0)
+        printf("%d iterations\n", iterations);
+
+    double *sendbuf = malloc(local_Nx * (Ny + 1) * sizeof(double));
+
+    for (i = 1; i <= local_Nx; i++)
+    {
+        for (j = 0; j < Ny + 1; j++)
+        {
+            sendbuf[(i - 1)*(Ny + 1) + j] = V_cur[i][j];
+        }
+    }
     
-    int send_count = local_Nx * (Ny + 1);
+    int local_size = local_Nx * (Ny + 1);
 
-    double *sendbuf = malloc(send_count * sizeof(double));
-
-    int k = 0;
-    for (int i = 1; i <= local_Nx; i++)
-        for (int j = 0; j <= Ny; j++)
-            sendbuf[k++] = V[i][j];
-
-    double *recvbuf = NULL;
     int *recvcounts = NULL;
     int *displs = NULL;
 
     if (rank == 0)
     {
-        recvbuf = malloc((Nx + 1) * (Ny + 1) * sizeof(double));
         recvcounts = malloc(size * sizeof(int));
-        displs = malloc(size * sizeof(int));
     }
 
-    int local_count = send_count;
+    MPI_Gather(
+        &local_size, 1, MPI_INT,
+        recvcounts, 1, MPI_INT,
+        0, MPI_COMM_WORLD
+    );
+
+    double *recvbuf = NULL;
 
     if (rank == 0)
     {
-        int offset = 0;
-        for (int p = 0; p < size; p++)
-        {
-            int p_local_Nx = (p < remainder) ? base + 1 : base;
+        displs = malloc(size * sizeof(int));
 
-            recvcounts[p] = p_local_Nx * (Ny + 1);
-            displs[p] = offset;
+        displs[0] = 0;
+        for (int p = 1; p < size; p++)
+            displs[p] = displs[p-1] + recvcounts[p-1];
 
-            offset += recvcounts[p];
-        }
+        int total_size = displs[size-1] + recvcounts[size-1];
+
+        recvbuf = malloc(total_size * sizeof(double));
     }
 
     MPI_Gatherv(
-        sendbuf,
-        send_count,
-        MPI_DOUBLE,
-        recvbuf,
-        recvcounts,
-        displs,
-        MPI_DOUBLE,
-        0,
-        MPI_COMM_WORLD
+        sendbuf, local_size, MPI_DOUBLE,
+        recvbuf, recvcounts, displs, MPI_DOUBLE,
+        0, MPI_COMM_WORLD
     );
-    free(sendbuf);
 
     double **V_global = NULL;
 
@@ -230,26 +214,53 @@ double **seidel(double border_x, double border_y,
     {
         V_global = alloc_matrix(Nx + 1, Ny + 1);
 
-        int k = 0;
-        for (int i = 0; i <= Nx; i++)
-            for (int j = 0; j <= Ny; j++)
-                V_global[i][j] = recvbuf[k++];
-    }
+        int offset = 0;
 
-    free_matrix(V, local_width);
+        for (int p = 0; p < size; p++)
+        {
+            int p_local_Nx = (p < rem) ? base + 1 : base;
 
-    if (rank == 0)
-    {
+            int p_i_start = (p < rem)
+                ? 1 + p * (base + 1)
+                : 1 + rem * (base + 1) + (p - rem) * base;
+
+            for (int i_loc = 0; i_loc < p_local_Nx; i_loc++)
+            {
+                int i_global = p_i_start + i_loc;
+
+                for (j = 0; j < Ny + 1; j++)
+                {
+                    V_global[i_global][j] =
+                        recvbuf[offset + i_loc*(Ny+1) + j];
+                }
+            }
+
+            offset += recvcounts[p];
+        }
+
+        /* границы */
+        for (j = 0; j < Ny + 1; j++)
+        {
+            V_global[0][j] = u_left(j * h_y);
+            V_global[Nx][j] = u_right(j * h_y);
+        }
+
+        free_matrix(V_cur, local_Nx + 2);
+        free(sendbuf);
         free(recvbuf);
         free(recvcounts);
         free(displs);
-    }
 
-    if (rank == 0)
-    {
-        printf("%d iterations\n", iterations);
         return V_global;
     }
-    else
-        return NULL;
+
+    free_matrix(V_cur, local_Nx + 2);
+    free(sendbuf);
+
+    free(send_left);
+    free(send_right);
+    free(recv_left);
+    free(recv_right);
+
+    return NULL;
 }
