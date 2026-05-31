@@ -72,6 +72,8 @@
 \newtheorem*{nonum}{Решение}
 
 \def\figureautorefname{Рисунок}
+\def\listingautorefname{Листинге}
+\def\sectionautorefname{раздела}
 
 % настоящее матожидание
 \newcommand{\MExpect}{\mathsf{M}}
@@ -83,3 +85,7 @@
  \renewcommand*{\hm}[1]{#1\nobreak\discretionary{} {\hbox{$\mathsurround=0pt #1$}}{}}
 
 \mathtoolsset{showonlyrefs=false}
+\definecolor{codebg}{rgb}{0.97, 0.97, 0.97}
+
+\floatname{listing}{Листинг}
+\usepackage[section]{placeins}

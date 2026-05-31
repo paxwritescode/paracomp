@@ -1,0 +1,20 @@
+└── src/
+    ├── CMakeLists.txt
+    ├── main.c
+    ├── def.h
+    ├── seidel.c
+    ├── seidel.h
+    ├── study.
+    ├── study.h
+    ├── test.
+    ├── test.h
+    ├── functions.
+    ├── functions.h
+    ├── tools.c
+    ├── tools.h
+    ├── build/
+    │   └── seidel
+    └── results/
+        ├── scaling_data.csv
+        ├── time_vs_grid.csv
+        └── solution.csv

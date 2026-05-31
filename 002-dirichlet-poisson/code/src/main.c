@@ -13,7 +13,14 @@ int main(int argc, char **argv)
     // run_test_case(rank);
     // study_time_vs_grid_size(rank, size);
 
-    study_scaling_performance(rank, size);
+    // study_scaling_performance(rank, size);
+
+    double **V = seidel(PI, 1.0, 
+                        80, 400, 1e-6, 
+                        &f, &u_0y, &u_piy, &u_x1, &u_x0, 
+                        100000);
+
+    if (V) free_matrix(V, 80 + 1);
 
     MPI_Finalize();
 

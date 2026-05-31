@@ -120,10 +120,21 @@ double **seidel(double border_x, double border_y,
             MPI_COMM_WORLD, MPI_STATUS_IGNORE
         );
 
-        for (j = 0; j < Ny + 1; j++)
+        if (left != MPI_PROC_NULL)
         {
-            V_prev[0][j] = recv_left[j];
-            V_prev[local_Nx + 1][j] = recv_right[j];
+            for (j = 0; j < Ny + 1; j++)
+            {
+                V_prev[0][j] = recv_left[j];
+                V_cur[0][j]  = recv_left[j];
+            }
+        }
+        if (right != MPI_PROC_NULL)
+        {
+            for (j = 0; j < Ny + 1; j++)
+            {
+                V_prev[local_Nx + 1][j] = recv_right[j];
+                V_cur[local_Nx + 1][j]  = recv_right[j];
+            }
         }
 
         for (i = 1; i <= local_Nx; i++)
@@ -156,6 +167,11 @@ double **seidel(double border_x, double border_y,
 
     swap_matrices(&V_prev, &V_cur);
 
+    free(send_left);
+    free(send_right);
+    free(recv_left);
+    free(recv_right);
+
     free_matrix(V_prev, local_Nx + 2);
 
     if (rank == 0)
@@ -173,13 +189,8 @@ double **seidel(double border_x, double border_y,
     
     int local_size = local_Nx * (Ny + 1);
 
-    int *recvcounts = NULL;
-    int *displs = NULL;
-
-    if (rank == 0)
-    {
-        recvcounts = malloc(size * sizeof(int));
-    }
+    int *recvcounts = malloc(size * sizeof(int));
+    int *displs = malloc(size * sizeof(int));
 
     MPI_Gather(
         &local_size, 1, MPI_INT,
@@ -187,19 +198,20 @@ double **seidel(double border_x, double border_y,
         0, MPI_COMM_WORLD
     );
 
-    double *recvbuf = NULL;
+    displs[0] = 0;
+    for (int p = 1; p < size; p++)
+        displs[p] = displs[p-1] + recvcounts[p-1];
 
+    int total_size = displs[size-1] + recvcounts[size-1];
+
+    double *recvbuf = NULL;
     if (rank == 0)
     {
-        displs = malloc(size * sizeof(int));
-
-        displs[0] = 0;
-        for (int p = 1; p < size; p++)
-            displs[p] = displs[p-1] + recvcounts[p-1];
-
-        int total_size = displs[size-1] + recvcounts[size-1];
-
         recvbuf = malloc(total_size * sizeof(double));
+    }
+    else
+    {
+        recvbuf = malloc(1 * sizeof(double));
     }
 
     MPI_Gatherv(
@@ -238,11 +250,33 @@ double **seidel(double border_x, double border_y,
             offset += recvcounts[p];
         }
 
-        /* границы */
+
         for (j = 0; j < Ny + 1; j++)
         {
             V_global[0][j] = u_left(j * h_y);
             V_global[Nx][j] = u_right(j * h_y);
+        }
+
+        if (Nx == 80 && Ny == 400)
+        {
+            FILE *f_sol = fopen("results/solution.csv", "w");
+            if (f_sol != NULL)
+            {
+                for (int gi = 0; gi <= Nx; gi++)
+                {
+                    for (int gj = 0; gj <= Ny; gj++)
+                    {
+                        fprintf(f_sol, "%lf%s", V_global[gi][gj], (gj == Ny) ? "" : ",");
+                    }
+                    fprintf(f_sol, "\n");
+                }
+                fclose(f_sol);
+                printf("[Rank 0] Numerical solution successfully saved to 'results/solution.csv'\n");
+            }
+            else
+            {
+                printf("[Rank 0] Error opening results/solution.csv for writing!\n");
+            }
         }
 
         free_matrix(V_cur, local_Nx + 2);
@@ -256,11 +290,9 @@ double **seidel(double border_x, double border_y,
 
     free_matrix(V_cur, local_Nx + 2);
     free(sendbuf);
-
-    free(send_left);
-    free(send_right);
-    free(recv_left);
-    free(recv_right);
+    free(recvbuf);
+    free(recvcounts);
+    free(displs);
 
     return NULL;
 }
