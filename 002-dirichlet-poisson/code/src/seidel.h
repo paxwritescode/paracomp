@@ -9,7 +9,6 @@ double **seidel(double border_x, double border_y,
                 double (*f)(double, double),
                 double (*u_left)(double), double (*u_right)(double),
                 double (*u_up)(double), double (*u_down)(double),
-                int max_iter,
-                int size, int rank);
+                int max_iter);
 
 #endif
